@@ -3,39 +3,26 @@ const express = require('express')
 const Apollo = require('apollo-server-express')
 const app = express()
 const port = 3000
+const { Sequelize, Model, DataTypes } = require('sequelize');
+const sequelize = new Sequelize('joaoferr_dtam', 'joaoferr_dtam', '5SNhnBGKPUJTYy2M', {
+    host: 'www.joaoferreira.eu',
+    dialect: 'mysql'
+});
 
-let users = {
-    1: {
-        id: 1, 
-        username: "João Ferreira",
-    },
-    2: {
-        id: 2, 
-        username: "Manuel Marques",
-    }, 
-    3: {
-        id: 3, 
-        username: "Pedro Couto",
+const User_GQL = sequelize.define('gql_user', {
+    username: {
+        type: DataTypes.STRING
     }
-}
+})
 
-let messages = {
-    1: {
-        id: 1, 
-        text: "Hello",
-        userID: 1
-    },
-    2: {
-        id: 2,
-        text: "World",
-        userID: 2
-    },
-    3: {
-        id: 3,
-        text: "ESMAD",
-        userID: 3
+const Message_GQL = sequelize.define('gql_message', {
+    text: {
+        type: DataTypes.STRING
     }
-}
+})
+
+User_GQL.hasMany(Message_GQL); 
+Message_GQL.belongsTo(User_GQL); 
 
 const schema = Apollo.gql `
     type Query {
@@ -50,7 +37,6 @@ const schema = Apollo.gql `
     type User {
         id: ID!
         username: String!
-        special: String!
         messages: [Message!]
     }
 
@@ -68,60 +54,50 @@ const schema = Apollo.gql `
 
 const resolvers = {
     Query: {
-        me: () => {
-            return users[1]
+        me: async () => {
+            return await User_GQL.findByPk(1)
         },
-        user: (parent, {id}) => {
-            return users[id]
+        user: async (parent, {id}) => {
+            return await User_GQL.findByPk(id)
         }, 
-        users: () => {
-            return Object.values(users)
+        users: async () => {
+            return await User_GQL.findAll()
         },
-        message: (parent, {id}) => {
-            return messages[id]
+        message: async (parent, {id}) => {
+            return await Message_GQL.findByPk(id)
         },
-        messages: () => {
-            return Object.values(messages)
+        messages: async () => {
+            return await Message_GQL.findAll()
         }
     },
 
     Mutation: {
-        createMessage: (parent, {text, userID}) => {
-            let id = Object.keys(messages).length + 1
-            let message = {
-                id: id,
-                text: text,
-                userID: userID
-            }
-
-            messages[id] = message; 
-
-            return message; 
+        createMessage: async (parent, {text, userID}) => {
+            return await Message_GQL.create({
+                text: text, 
+                gqlUserId: userID
+            })
         },
-        deleteMessage: (parent, {id}) => {
-            if (!messages[id]) {
-                return false;
-            } else {
-                delete messages[id];
-                return true;
-            }
+        deleteMessage: async (parent, {id}) => {
+            return await Message_GQL.destroy({
+                where: { id: id }
+            })
         }
     },
 
     User: {
-        special: parent => {
-            return parent.username + "_" + parent.id
-        }, 
-        messages: user => {
-            return Object.values(messages).filter(
-                message => message.userID == user.id
-            )
+        messages: async user => {
+            return await Message_GQL.findAll({
+                where: {
+                    gqlUserId: user.id
+                }
+            })
         }
     },
 
     Message: {
-        user: message => {
-            return users[message.userID]
+        user: async message => {
+            return await User_GQL.findByPk(message.gqlUserId)
         }
     }
 }; 
@@ -135,4 +111,7 @@ server.applyMiddleware({app, path: '/graphql'});
 app.use(cors()); 
 app.listen(port, function() {
     console.log("Apollo Server on localhost:" + port + "/graphql"); 
+    sequelize.sync().then().catch(error => {
+        console.log(error); 
+    })    
 })  
