@@ -49,6 +49,7 @@ const schema = Apollo.gql `
     type Mutation {
         createMessage(text: String!, userID: ID!): Message!
         deleteMessage(id: ID!): Boolean!
+        createUser(username: String!): User!
     }
 `;
 
@@ -81,6 +82,11 @@ const resolvers = {
         deleteMessage: async (parent, {id}) => {
             return await Message_GQL.destroy({
                 where: { id: id }
+            })
+        },
+        createUser: async (parent, {username}) => {
+            return await User_GQL.create({
+                username: username
             })
         }
     },
