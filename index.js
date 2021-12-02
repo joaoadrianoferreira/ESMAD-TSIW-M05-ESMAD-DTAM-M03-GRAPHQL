@@ -113,11 +113,13 @@ const server = new Apollo.ApolloServer({
     resolvers
 }); 
 
-server.applyMiddleware({app, path: '/graphql'}); 
-app.use(cors()); 
-app.listen(port, function() {
-    console.log("Apollo Server on localhost:" + port + "/graphql"); 
-    sequelize.sync().then().catch(error => {
-        console.log(error); 
-    })    
-})  
+server.start().then(()=>{
+    server.applyMiddleware({app, path: '/graphql'}); 
+    app.use(cors()); 
+    app.listen(port, function() {
+        console.log("Apollo Server on localhost:" + port + "/graphql"); 
+        sequelize.sync().then().catch(error => {
+            console.log(error); 
+        })    
+    })  
+})

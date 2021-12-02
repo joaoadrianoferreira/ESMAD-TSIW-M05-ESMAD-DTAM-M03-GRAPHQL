@@ -1,5 +1,5 @@
 {
-  "name": "graphqlexample",
+  "name": "app",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -13,8 +13,8 @@
     "apollo-server-express": "^3.5.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "graphql": "^15.4.0",
-    "mysql2": "^2.2.5",
-    "sequelize": "^6.3.5"
+    "graphql": "^15.7.2",
+    "mysql2": "^2.3.3",
+    "sequelize": "^6.12.0-alpha.1"
   }
 }
