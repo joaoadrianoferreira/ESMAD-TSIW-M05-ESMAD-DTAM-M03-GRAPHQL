@@ -1,13 +1,14 @@
-const cors = require('cors')
-const express = require('express')
-const Apollo = require('apollo-server-express')
-const app = express()
-const port = 3000
-const { Sequelize, Model, DataTypes } = require('sequelize');
-const sequelize = new Sequelize('joaoferr_dtam', 'joaoferr_dtam', '5SNhnBGKPUJTYy2M', {
+const cors = require('cors'); 
+const express = require('express'); 
+const Apollo = require('apollo-server-express'); 
+const { Sequelize, Model, DataTypes } = require('sequelize')
+const app = express(); 
+const port = 3000; 
+
+const sequelize = new Sequelize('joaoferr_tsiw', 'joaoferr_tsiw', 'GAa8xvmV3eKrVa8C', {
     host: 'www.joaoferreira.eu',
-    dialect: 'mysql'
-});
+    dialect: 'mysql' 
+})
 
 const User_GQL = sequelize.define('gql_user', {
     username: {
@@ -21,46 +22,45 @@ const Message_GQL = sequelize.define('gql_message', {
     }
 })
 
-User_GQL.hasMany(Message_GQL); 
-Message_GQL.belongsTo(User_GQL); 
+User_GQL.hasMany(Message_GQL)
+Message_GQL.belongsTo(User_GQL)
 
 const schema = Apollo.gql `
     type Query {
-        me: User
-        user(id: ID!): User
-        users: [User!]
-
-        message(id: ID!): Message
+        me: User,
+        user(id: ID!): User,
+        users: [User!],
+        message(id: ID!): Message,
         messages: [Message!]
     }
 
     type User {
-        id: ID!
-        username: String!
+        id: ID!,
+        username: String!,
         messages: [Message!]
     }
 
     type Message {
-        id: ID!
-        text: String!
+        id: ID!,
+        text: String!,
         user: User!
     }
 
     type Mutation {
-        createMessage(text: String!, userID: ID!): Message!
-        deleteMessage(id: ID!): Boolean!
-        createUser(username: String!): User!
+        createMessage(text: String!, userID: ID!): Message!,
+        createUser(username: String!): User!,
+        deleteMessage(id:ID!): Boolean!
     }
-`;
+`; 
 
 const resolvers = {
     Query: {
-        me: async () => {
-            return await User_GQL.findByPk(1)
+        me: async ()=> {
+            return await User_GQL.findByPk(1);
         },
         user: async (parent, {id}) => {
             return await User_GQL.findByPk(id)
-        }, 
+        },
         users: async () => {
             return await User_GQL.findAll()
         },
@@ -79,15 +79,17 @@ const resolvers = {
                 gqlUserId: userID
             })
         },
-        deleteMessage: async (parent, {id}) => {
-            return await Message_GQL.destroy({
-                where: { id: id }
-            })
-        },
         createUser: async (parent, {username}) => {
             return await User_GQL.create({
                 username: username
             })
+        },
+        deleteMessage: (parent, {id}) => {
+            return Message_GQL.destroy({
+                where: {
+                    id: id
+                }
+            }) 
         }
     },
 
@@ -106,20 +108,22 @@ const resolvers = {
             return await User_GQL.findByPk(message.gqlUserId)
         }
     }
-}; 
+}
 
 const server = new Apollo.ApolloServer({
     typeDefs: schema, 
     resolvers
-}); 
+})
 
-server.start().then(()=>{
-    server.applyMiddleware({app, path: '/graphql'}); 
-    app.use(cors()); 
-    app.listen(port, function() {
-        console.log("Apollo Server on localhost:" + port + "/graphql"); 
-        sequelize.sync().then().catch(error => {
-            console.log(error); 
-        })    
-    })  
+server.start().then(()=> {
+    server.applyMiddleware({app, path: '/graphql'});
+    app.use(cors); 
+    app.listen(port, ()=>{
+        console.log('Apollo Server is running on localhos:' + port + '/graphql');
+        sequelize.sync().then(()=> {
+            console.log("Connected to Database");
+        }).catch(error => {
+            console.log(error);
+        })
+    })
 })
