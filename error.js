@@ -15,7 +15,7 @@ exports.errorType = {
         statusCode: 406
     },
     NOTFOUND: {
-        message: "Invalid User",
+        message: "Not Found",
         statusCode: 404
     },
     INVALIDCREDENTIALS: {

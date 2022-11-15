@@ -80,12 +80,17 @@ const resolvers = {
                 return "User Registered"
             }
         }, 
-        createMessage: async (parent, {text, userID}, {req})=> {
+        createMessage: async (parent, {text}, {req})=> {
             let auth = await utilities.validateToken(req.headers.authorization)
             if(auth) {
+                let user = await models.User_GQL.findOne({
+                    where: {
+                        username: auth.data.user
+                    }
+                })
                 return await models.Message_GQL.create({
                     text: text, 
-                    gqlUserId: userID
+                    gqlUser2Id: user.id
                 })
             } else {
                 throw new Error(errorName.UNAUTHORIZED)
@@ -94,11 +99,27 @@ const resolvers = {
         deleteMessage: async (parent, {id}, {req}) => {
             let auth = await utilities.validateToken(req.headers.authorization)
             if(auth) {
-                return models.Message_GQL.destroy({
+
+                let user = await models.User_GQL.findOne({
                     where: {
-                        id: id
+                        username: auth.data.user
+                    }
+                })
+
+                let id_user = user.id; 
+
+                let deletedMessage = await models.Message_GQL.destroy({
+                    where: {
+                        id: id,
+                        gqlUser2Id: id_user
                     }
                 }) 
+
+                if(deletedMessage == 1) {
+                    return "Message Deleted"
+                } else {
+                    throw new Error(errorName.NOTFOUND)
+                }
             } else {
                 throw new Error(errorName.UNAUTHORIZED)
             } 
@@ -109,7 +130,7 @@ const resolvers = {
         messages: async user => {
             return await models.Message_GQL.findAll({
                 where: {
-                    gqlUserId: user.id
+                    gqlUser2Id: user.id
                 }
             })
         }
@@ -117,7 +138,7 @@ const resolvers = {
 
     Message: {
         user: async message => {
-            return await models.User_GQL.findByPk(message.gqlUserId)
+            return await models.User_GQL.findByPk(message.gqlUser2Id)
         }
     }
 }
