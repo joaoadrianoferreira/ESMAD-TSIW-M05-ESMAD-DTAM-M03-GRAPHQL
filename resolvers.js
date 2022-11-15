@@ -6,7 +6,11 @@ const bcrypt = require('bcrypt');
 const resolvers = {
     Query: {
         login: async (parent, {username, password}, {req})=> {
-            let exist = await models.User_GQL.findAll({username: username})
+            let exist = await models.User_GQL.findAll({
+                where: {
+                    username: username
+                }
+            })
             if(exist.length > 0) {
                 let valid = await bcrypt.compare(password, exist[0].password)
                 if(valid) {
@@ -76,23 +80,28 @@ const resolvers = {
                 return "User Registered"
             }
         }, 
-        createMessage: async (parent, {text, userID}) => {
-            return await models.Message_GQL.create({
-                text: text, 
-                gqlUserId: userID
-            })
+        createMessage: async (parent, {text, userID}, {req})=> {
+            let auth = await utilities.validateToken(req.headers.authorization)
+            if(auth) {
+                return await models.Message_GQL.create({
+                    text: text, 
+                    gqlUserId: userID
+                })
+            } else {
+                throw new Error(errorName.UNAUTHORIZED)
+            }
         },
-        createUser: async (parent, {username}) => {
-            return await models.User_GQL.create({
-                username: username
-            })
-        },
-        deleteMessage: (parent, {id}) => {
-            return models.Message_GQL.destroy({
-                where: {
-                    id: id
-                }
-            }) 
+        deleteMessage: async (parent, {id}, {req}) => {
+            let auth = await utilities.validateToken(req.headers.authorization)
+            if(auth) {
+                return models.Message_GQL.destroy({
+                    where: {
+                        id: id
+                    }
+                }) 
+            } else {
+                throw new Error(errorName.UNAUTHORIZED)
+            } 
         }
     },
 

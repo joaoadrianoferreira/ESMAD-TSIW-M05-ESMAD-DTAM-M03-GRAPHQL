@@ -24,7 +24,6 @@ const schema = Apollo.gql `
     type Mutation {
         register(username: String!, password: String!): String!,
         createMessage(text: String!, userID: ID!): Message!,
-        createUser(username: String!): User!,
         deleteMessage(id:ID!): Boolean!
     }
 `; 
